@@ -236,6 +236,9 @@ def process_header(path, module_prefix = 'c'):
     insert_pre = None
     defined_types = []
 
+    if not exists(path):
+        raise FileNotFoundError(f'Failed to resolve path {path}')
+
     index = Index.create()
     translation_unit = index.parse(path, args = d_args + i_args)
     cursor = translation_unit.cursor
@@ -325,7 +328,13 @@ def recurse_for_headers(path, contents):
                 if not '#include' in r:
                     contents += f'{r}\n'
     except:
+        print(f'Path {path} could not be resolved - defaulting to deferred inclusion')
+        # TODO: Fix conditional inclusion
+        #       The reason we can't just do this is
+        #       because we will end up with
+        #       conditionally included C code in output
         return f'#include "{path}"\n'
+        # return ''
     includes = include_directive_pattern.findall(raw)
     for i in includes:
         contents += recurse_for_headers(f'{i[1]}{i[2]}{i[3]}', '')
